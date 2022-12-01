@@ -1,0 +1,17 @@
+
+
+body {
+    background-color: black;
+}
+#canvas1 {
+    border: 0px solid black;
+    position: absolute;
+/*    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);*/
+    background: #3313c5;
+    width: 100px;
+    height: 100px;
+
+}
+

@@ -1,0 +1,5 @@
+class game holds most central features, such as the history, inputs, initial configuration,
+enemies, projektiles, tower arrays.
+
+do i want a main menu or am i fine with starting in wave 1 and going from there?
+you open shit, and stuff comes out
