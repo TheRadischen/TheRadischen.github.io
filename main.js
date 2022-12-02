@@ -257,18 +257,18 @@ class Tower{
     }
     update(){
         this.counter++;
-        if (this.counter % 10 === 0 && this.game.elements.enemies.length > 0){
+        if (this.counter % 10 === 0){
             this.ready = true;
         }
-        if(this.ready){
+        if(this.ready && this.game.elements.enemies.length > 0){
             for (let x of this.game.elements.enemies){
             // console.log((calcDist(this.centre(), x.position)))
-            if (calcDist(this.centre(), x.position) <= this.range / 100){                            
-                this.aim = x;
-                this.game.elements.projectiles.push(new Projectile(this))
-                this.ready = false;
-                break;
-            }
+                if (calcDist(this.centre(), x.position) <= this.range / 100){                            
+                    this.aim = x;
+                    this.game.elements.projectiles.push(new Projectile(this))
+                    this.ready = false;
+                    break;
+                }
         }
         }
         
