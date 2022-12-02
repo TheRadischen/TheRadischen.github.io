@@ -95,7 +95,7 @@ class Canvas{
         this.canvas = document.getElementById(canvas1);
         this.ctx = this.canvas.getContext("2d");
         this.canvas.width = this.width;
-        this.canvas.height = this. height;
+        this.canvas.height = this.height;
         this.canvas.style.width = `${this.width}px`
         this.canvas.style.height = `${this.height}px`
     }
@@ -374,22 +374,6 @@ class Game {
             }
             x.tempHeigth = x.pathHeight;
         }
-        // let tempPath = [];
-        // for (let y = 0; y < this.gameSize.columns; y++){
-        //     tempPath.push([]);
-        //     for (let x = 0; x < this.gameSize.rows; x++){
-        //         if (this.gameGrid.get(`x${x}y${y}`).walk){
-        //             tempPath[y].push(0);
-        //         } else {
-        //             tempPath[y].push(-10);
-        //         }
-                
-        //     }
-        // }
-
-
-        // console.log(tempPath)
-        // this.path = tempPath;
         let change = 1;
         while (change){
             change = 0;
@@ -500,7 +484,7 @@ class Game {
         this.mainAnimate();
     }
     updateElements = () => {
-        if (this.frame % 99 === 0){
+        if (this.frame % 2 === 0){
             this.elements.enemies.push(new Enemy(this));
         }
         this.elements.towers.forEach(element => {
