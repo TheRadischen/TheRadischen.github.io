@@ -257,7 +257,7 @@ class Tower{
     }
     update(){
         this.counter++;
-        if (this.counter % 100 === 0 && this.game.elements.enemies.length > 0){
+        if (this.counter % 10 === 0 && this.game.elements.enemies.length > 0){
             this.ready = true;
         }
         if(this.ready){
