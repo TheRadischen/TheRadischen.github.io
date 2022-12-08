@@ -11,15 +11,13 @@
 <script>
 const canvas = document.getElementById(`canvas`);
 const ctx = canvas.getContext(`2d`);
-canvas.width = 1800;
-canvas.height = 1800;
+canvas.width = 900;
+canvas.height = 900;
 canvas.style.background = "black";
-canvas.style.width = "1800px";
-canvas.style.height = "1800px";
+canvas.style.width = "900px";
+canvas.style.height = "900px";
 
-canvas.addEventListener("mousedown",function zoom(e) {
 
-});
 ctx.fillStyle = "black";
 ctx.fillRect(100,100,150,150);
 
@@ -135,7 +133,7 @@ class Shape{
         this.numEdges = numEdges;
         this.force = new Vector2d(0, 0);
         this.color = "hsl(99, 100%, 47%)";
-        this.size = 40;
+        this.size = 20;
         this.age = 0;
         this.weigth = 1;
     }
@@ -159,7 +157,7 @@ class Shape{
     update(){
 // everything goes to the middle
         let gravity = this.posistion.sub(middle.posistion)
-        this.movementV2.selfAdd(gravity.unitVector, Math.min(2, 400 / gravity.length))
+        this.movementV2.selfAdd(gravity.unitVector, Math.min(2, 100 / gravity.length))
         let relativSpeed = Math.min(100,(this.movementV2.length * 3))
         this.color= `hsl(297, 100%, ${relativSpeed}%)`
 
