@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang = "en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Javascript Game</title>
+    </head>
+    <body>
+       
+<canvas id="canvas"></canvas>
+<script>
+const canvas = document.getElementById(`canvas`);
+const ctx = canvas.getContext(`2d`);
+canvas.width = 1800;
+canvas.height = 1800;
+canvas.style.background = "black";
+canvas.style.width = "1800px";
+canvas.style.height = "1800px";
+
+canvas.addEventListener("mousedown",function zoom(e) {
+
+});
+ctx.fillStyle = "black";
+ctx.fillRect(100,100,150,150);
+
+function nGram2(numEdges, c){
+    let centre = c
+    let full = 2 * Math.PI;
+    let radius = 50
+    ctx.fillStyle = "yellow";
+    ctx.beginPath();
+    let index = 0;
+    ctx.moveTo(centre.x + radius * Math.cos(full * index), centre.y + radius * Math.sin(full * index));
+    for ( let i = 1; i <= numEdges; i++){
+        if(i *2 === numEdges){
+            ctx.closePath();
+    // ctx.stroke()
+    ctx.fill()
+            i -= 0.5;
+            ctx.moveTo(centre.x + radius * Math.cos(full * index), centre.y + radius * Math.sin(full * index));
+        }
+        index = i*2/numEdges;
+        ctx.lineTo(centre.x + radius * Math.cos(full * index), centre.y + radius * Math.sin(full * index));
+    }
+    ctx.closePath();
+    // ctx.stroke()
+    ctx.fill()
+}
+function draw(){
+    for (let i = 0; i < 20; i++){
+    let centre1 = {x: 100 * i - 100, y: 100 * i};
+    nGram2(i,centre1);
+    console.trace();
+}
+}
+
+    nGram2(1000,{x: 333, y: 88});
+function nGram(numEdges, c, r, color){
+    let centre = c
+    let full = 2 * Math.PI;
+    let radius = r;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    let index = 0;
+    ctx.moveTo(centre.x + radius * Math.cos(full * index), centre.y + radius * Math.sin(full * index));
+    for (let i = 1; i <= numEdges; i++){
+        index = i/numEdges;
+        ctx.lineTo(centre.x + radius * Math.cos(full * index), centre.y + radius * Math.sin(full * index));
+    }
+    ctx.closePath();
+    // ctx.stroke()
+    ctx.fill()
+}
+for (let i = 0; i < 20; i++){
+    let centre1 = {x: 100 * i, y: 100 * i};
+    nGram(i,centre1);
+}
+
+class Vector2d{
+    constructor(x, y){
+        this.x = x;
+        this.y = y;
+    }
+    get length(){
+        return Math.sqrt(this.x ** 2 + this.y ** 2)
+    }
+    get unitVector(){
+        let x = this.x / this.length
+        let y = this.y / this.length
+        return new Vector2d(x, y)
+    }
+    get direction(){
+        if (Math.sign(this.y) === -1){
+            return Math.PI * 2 - Math.acos(this.unitVector.x)
+        } else {
+            return Math.acos(this.unitVector.x)
+        }
+        // return num between 0 and 2 pi
+    }
+    get directionNeg(){
+        return (Math.PI + this.direction) % (Math.PI * 2)
+    }
+    selfAdd = (v2, weigth = 1) => {
+        this.x = this.x + v2.x * weigth;
+        this.y = this.y + v2.y * weigth;
+    }
+    add = (v2, weigth = 1) => {
+        let x = this.x + v2.x * weigth;
+        let y = this.y + v2.y * weigth;
+        return new Vector2d(x, y)
+    }
+    selfSub = (v2, weigth = 1) => {
+        this.x = this.x - v2.x * weigth;
+        this.y = this.y - v2.y * weigth;
+    }
+    sub = (v2, weigth = 1) => {
+        let x = v2.x - this.x * weigth;
+        let y = v2.y - this.y * weigth;
+        return new Vector2d(x, y)
+    }
+    selfMulti = (scalar) => {
+        this.x = this.x * scalar;
+        this.y = this.y * scalar;
+    }
+    multi = (scalar) => {
+        let x = this.x * scalar;
+        let y = this.y * scalar;
+        return new Vector2d(x, y)
+    }    
+}
+class Shape{
+    constructor(pos, numEdges, movement){
+        this.posistion = new Vector2d(pos.x, pos.y);
+        this.movementV2 = new Vector2d(movement.x, movement.y);
+        this.numEdges = numEdges;
+        this.force = new Vector2d(0, 0);
+        this.color = "hsl(99, 100%, 47%)";
+        this.size = 40;
+        this.age = 0;
+        this.weigth = 1;
+    }
+    merge = (shape2) => {
+        let gesamWeigth = this.weigth + shape2.weigth;
+        let x = (this.posistion.x * this.weigth + shape2.posistion.x * shape2.weigth) / gesamWeigth;
+        let y = (this.posistion.y * this.weigth + shape2.posistion.y * shape2.weigth) / gesamWeigth;
+        let numEdges = this.numEdges + shape2.numEdges;
+        let movement1 = (this.movementV2.multi(this.weigth));
+        let movement2 = (shape2.movementV2.multi(shape2.weigth));
+        let gesMov = (movement1.add(movement2));
+        gesMov.selfMulti(1 / gesamWeigth)
+        let newS = new Shape ({x,y}, numEdges, gesMov)
+        newS.weigth = gesamWeigth;
+        //size toDo
+        return newS
+    }
+    draw(){
+        nGram(this.numEdges, this.posistion, this.size, this.color)
+    }
+    update(){
+// everything goes to the middle
+        let gravity = this.posistion.sub(middle.posistion)
+        this.movementV2.selfAdd(gravity.unitVector, Math.min(2, 400 / gravity.length))
+        let relativSpeed = Math.min(100,(this.movementV2.length * 3))
+        this.color= `hsl(297, 100%, ${relativSpeed}%)`
+
+        this.age++
+        // this.movementV2.selfAdd(this.force)
+        // this.movementV2.selfMulti(0.99)
+        this.posistion.selfAdd(this.movementV2)
+    }
+}
+function collision(body1, body2){
+    let merger = body1.merge(body2);
+    merger.draw()
+    // let gesamtV2 = body1.movementV2.add(body2.movementV2)
+    // gesamtV2.selfMulti(0.5)
+    let body1CollisionV2 = body1.posistion.sub(body2.posistion)
+    // console.log(body1CollisionV2.direction, merger)
+    let body1RelToMergerV2 = body1.movementV2.sub(merger.movementV2)
+    // combine both directions to get output direction
+    let body1NewRelDirToMerger = ((Math.PI * 2 - body1RelToMergerV2.directionNeg) - (body1RelToMergerV2.direction - body1CollisionV2.direction) * 2) % (Math.PI * 2);
+    // console.log(body1RelToMergerV2.directionNeg, body1NewRelDirToMerger, body1RelToMergerV2.directionNeg - body1CollisionV2.direction)
+    let newBody1RelToMergerV2 = new Vector2d(body1RelToMergerV2.length * Math.cos(body1NewRelDirToMerger), body1RelToMergerV2.length * Math.sin(body1NewRelDirToMerger))
+    // console.log(newBody1RelToMergerV2)
+    let newBody2RelToMergerV2 = newBody1RelToMergerV2.multi(-1);
+    let newBody1V2 = newBody1RelToMergerV2.add(merger.movementV2)
+    let newBody2V2 = newBody2RelToMergerV2.add(merger.movementV2)
+    // console.log(merger,newBody1V2,newBody2RelToMergerV2)
+    body1.movementV2 = newBody1V2;
+    body2.movementV2 = newBody2V2;
+}
+
+
+function collision2(body1, body2) {
+    let body1CollisionV2 = body1.posistion.sub(body2.posistion).multi(-1);
+    let forceMulti = (((body1.size+body2.size) - calcDist(body1, body2)+1) ** 1.8 / 1100);
+    // let forceMulti = Math.log(((body1.size+body2.size) - calcDist(body1, body2)+1) ** 20.9 / 2) / 15;
+    // let forceMulti = ((body1.size+body2.size) / (calcDist(body1, body2))-1) ** 0.9;
+    let force = body1CollisionV2.unitVector.multi(forceMulti);
+    body1.movementV2.selfAdd(force)
+    // body1.movementV2.selfMulti(0.999)
+    // console.log(body1,body1CollisionV2,forceMulti,body1.force)
+}
+
+
+let frame = 0;
+let shapes = [];
+shapes.push(new Shape({x: 350, y: 500}, 5, {x: 0, y: -2}));
+shapes.push(new Shape({x: 300, y: 300}, 6, {x: 0.2, y: 3}));
+let middle = new Shape({x: 0, y: 0}, 3, {x: 0, y: 0})
+// let middle = new Shape({x: canvas.width / 2, y: canvas.height / 2}, 3, {x: 0, y: 0})
+canvas.addEventListener("mousemove",function(e){
+    middle.posistion.x = e.x;
+    middle.posistion.y = e.y;
+});
+animate()
+function animate(){
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    frame++;
+    if(shapes.length < 500){
+        let pos = {y: Math.floor(Math.random()*canvas.height), 
+            x: Math.floor(Math.random()*canvas.width)};
+        let movement = {y: 3-Math.floor(Math.random()*6), 
+            x: 3-Math.floor(Math.random()*6)};
+        let numEdges = Math.ceil(Math.random() * 3) + 2;
+        let newShape = new Shape(pos, numEdges, movement);
+        let spawn = true;
+        for(let x of shapes){
+            if(calcDistShort(x.posistion, newShape.posistion) < (x.size + newShape.size)){
+                spawn = false;
+                console.log("fail")
+            }
+        }
+        if(spawn){
+            shapes.push(newShape);
+        }
+        
+    }
+    let totalSpeed = 0;
+    let numShapes = 0;
+    for (let x of shapes){
+        numShapes++;
+        totalSpeed += x.movementV2.length
+    }
+    let averageSpeed = totalSpeed / numShapes;
+    console.log(averageSpeed)
+    for (let x of shapes){
+        x.draw();
+        x.update();
+        x.movementV2.selfMulti((1 - (averageSpeed - 2) / 100))
+         if(x.age > 50000){
+            shapes.splice(x,1)
+        }
+        for (let y of shapes){
+            if(x !== y && calcDistShort(x.posistion, y.posistion) < (x.size + y.size)){
+                // console.log("collision")
+                collision2(x, y);
+            }
+            if (x.posistion.x < 0){
+                x.movementV2.x = Math.abs(x.movementV2.x);
+            } else if (x.posistion.x > canvas.width){
+                x.movementV2.x = Math.abs(x.movementV2.x) * - 1;
+            } else if (x.posistion.y < 0){
+                x.movementV2.y = Math.abs(y.movementV2.y);
+            } else if (x.posistion.y > canvas.height){
+                x.movementV2.y = Math.abs(y.movementV2.y) * - 1;
+            }
+        }
+
+    }
+
+    requestAnimationFrame(animate)
+}
+
+function particleCollision(first,second){
+    let moveDir = calcDirection(first,second);
+        let ypart = Math.sin(moveDir);
+        let xpart = Math.cos(moveDir);
+        console.log(xpart,ypart)
+    console.log(first.movement,second.movement)
+    let totalSpeed = first.speed + second.speed;
+    let totalMovement = {x: (first.movement.x + second.movement.x) / 2, y: (first.movement.y + second.movement.y) / 2}
+    let firstCollisionVector = {x: (totalMovement.x - first.movement.x), y: (totalMovement.y - first.movement.y)}
+    let secondCollisionVector = {x: (totalMovement.x - second.movement.x), y: (totalMovement.y - second.movement.y)}
+    first.movement.x = firstCollisionVector.x + totalMovement.x
+    first.movement.y = firstCollisionVector.y + totalMovement.y
+    console.log(firstCollisionVector)
+    let collisionV2 = calcDirectionshort({x: 0, y:0},firstCollisionVector)
+    console.log("moveDir",moveDir)
+    console.log("cv2",collisionV2)
+    let outspeed = calcLenV2(firstCollisionVector)
+    let dirFirst = calV2Direction(first.movement)
+    let outv2 = {x: outspeed * Math.cos(-moveDir * 2 + dirFirst), y: Math.sin(-moveDir * 2 + dirFirst)};
+    console.log(outspeed, outv2)
+    second.movement.x = outv2.x + totalMovement.x
+    second.movement.y = outv2.y + totalMovement.y
+    first.movement.x = -outv2.x + totalMovement.x
+    first.movement.y = -outv2.y + totalMovement.y
+}
+
+function photonCollision(photon,particle){
+
+}
+
+// function collision(first, second){
+//     if (    !(  first.x > second.x + second.size ||
+//                 first.x + first.size < second.x ||
+//                 first.y > second.y + second.size ||
+//                 first.y + first.size < second.y)
+
+//     ) {
+//         return true;
+//     };
+// };
+
+function calcDist(first, second){
+    return Math.sqrt((first.posistion.x - second.posistion.x) ** 2 + (first.posistion.y - second.posistion.y) ** 2)
+}
+function calcLenV2(vector){
+    return Math.sqrt(vector.x ** 2 + vector.y ** 2)
+}
+
+//between 0 and 2 * PI, convert with sin to y, cos to x
+
+function calcDirection(self, target){
+    let dist = calcDist(self, target);
+    if (Math.sign(target.posistion.y - self.posistion.y) === -1){
+        return Math.PI * 2 - Math.acos((target.posistion.x - self.posistion.x) / dist);
+    } else {
+        return Math.acos((target.posistion.x - self.posistion.x) / dist);
+    }
+}
+function calV2Direction(vector){
+    let dist = calcLenV2(vector);
+    if (Math.sign(vector.y) === -1){
+        return Math.PI * 2 - Math.acos(vector.x / dist);
+    } else {
+        return Math.acos(vector.x / dist);
+    }
+}
+function calcDistShort(first, second){
+    return Math.sqrt((first.x - second.x) ** 2 + (first.y - second.y) ** 2)
+}
+function calcDirectionshort(self, target){
+    let dist = calcDistShort(self, target);
+    if (Math.sign(target.y - self.y) === -1){
+        return Math.PI * 2 - Math.acos((target.x - self.x) / dist);
+    } else {
+        return Math.acos((target.x - self.x) / dist);
+    }
+}
+
+
+
+</script>
+    </body>
+</html>
