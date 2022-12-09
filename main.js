@@ -31,6 +31,42 @@ class Mouse {
     
 }
 
+class UpgradeUi{
+    constructor(parent){
+        this.game = parent.game;
+        this.parent = parent;
+        this.position = parent.centre();
+        this.ctx = this.game.screen.ctx;
+        this.game.state = "upgrade";
+        this.width = 200;
+        this.height = 400;
+
+    }
+    draw = () => {
+        // console.log("draw", this.position)
+        let offset;
+        if (this.position.x * 100 > this.game.gameSize.x / 2){
+            if (this.position.y * 100 > this.game.gameSize.y / 2){
+                offset = {x: - this.width, y: - this.height}
+            } else {
+                offset = {x: - this.width, y: 0}
+            }
+        } else {
+            if (this.position.y * 100 > this.game.gameSize.y / 2){
+                offset = {x: 0, y: - this.height}
+            } else {
+                offset = {x: 0, y: 0}
+            }
+        }
+        console.log(this.game.gameSize.x)
+        this.ctx.fillStyle = "black";
+        this.ctx.fillRect(this.position.x * 100 + offset.x, this.position.y * 100 + offset.y, this.width, this.height);
+        this.ctx.fillStyle = "white";
+        this.ctx.fillRect(this.position.x * 100 + offset.x + 10, this.position.y * 100 + offset.y + 10, this.width - 20, this.height - 20);
+    }
+
+}
+
 const uiConf = {
     "UiClose": {
         position: {x: 0, y: 8},
@@ -40,15 +76,20 @@ const uiConf = {
         position: {x: 1, y: 8},
         color: "white",
     },
-    "placeTower": {
+    "place": {
         position: {x: 2, y: 8},
         color: "white",
     },
-    "sellTower": {
+    "sell": {
         position: {x: 3, y: 8},
         color: "white",
     },
+    "upgrade": {
+        position: {x: 4, y: 8},
+        color: "white",
+    },
 }
+
 class Ui {
     constructor(game, type){
         this.game = game;
@@ -56,7 +97,7 @@ class Ui {
         this.type = type;
         this.position = uiConf[type].position;
         this.gridPosition = xystring(this.position);
-        this.color = uiConf[type].position;
+        this.color = uiConf[type].color;
     }
     draw = () => {
         this.ctx.fillStyle = this.color;
@@ -64,6 +105,8 @@ class Ui {
         this.ctx.fillText(this.type, this.position.x * 100 + 10, this.position.y * 100 + 60);
     }
     action = () => {
+        
+        this.game.ui.delete("upgrade");
         switch (this.type) {
             case "UiMenu":
                 console.log("action")
@@ -72,15 +115,19 @@ class Ui {
                 console.log("close")
                 this.game.state = "wave";
                 break;
-            case "placeTower":
+            case "place":
                 console.log("place now");
-                this.game.state = "placeTower";
+                this.game.state = "place";
                 break;
-            case "sellTower":
+            case "sell":
                 console.log("sell now");
-                this.game.state = "sellTower";
+                this.game.state = "sell";
                 break;
-        
+            case "upgrade":
+                console.log("upgrade now");
+                this.game.state = "upgrade";
+                break;
+                    
             default:
                 break;
         }
@@ -203,7 +250,6 @@ class Enemy{
         }
 
 }
-
 class Projectile{
     constructor(parent){
         this.game = parent.game;
@@ -213,11 +259,7 @@ class Projectile{
             y: parent.position.y + 0.5
         };
         this.goal = parent.aim;
-        this.size = 10;
-        this.color = "yellow";
         this.dist = Infinity;
-        this.speed = 0.1;
-        this.power = 10;
     }
     update = () => {
         this.dist = calcDist(this.position, this.goal.position);
@@ -232,6 +274,17 @@ class Projectile{
 
 }
 
+class NormalProj extends Projectile{
+    constructor(parent){
+        super(parent);
+        this.size = parent.proj.size;
+        this.color = parent.proj.color;
+        this.speed = parent.proj.speed;
+        this.power = parent.power;
+
+    }
+}
+
 class Tower{
     constructor(parent){
         this.game = parent.game;
@@ -239,9 +292,7 @@ class Tower{
         this.position = parent.position;
         this.size = this.game.gameSize.scale;
         this.ctx = this.game.screen.ctx;
-        this.color = "green";
         this.aim = this.game.conf.end;
-        this.range = 200;
         this.counter = 1;
         this.ready = false;
     }
@@ -251,11 +302,11 @@ class Tower{
             y: this.position.y + 0.5
         }
     }
-    draw(){
+    draw = () => {
         this.ctx.fillStyle = this.color;
         this.ctx.fillRect(this.position.x * 100, this.position.y * 100, this.size, this.size);
     }
-    update(){
+    update = () => {
         this.counter++;
         if (this.counter % 10 === 0){
             this.ready = true;
@@ -265,14 +316,36 @@ class Tower{
             // console.log((calcDist(this.centre(), x.position)))
                 if (calcDist(this.centre(), x.position) <= this.range / 100){                            
                     this.aim = x;
-                    this.game.elements.projectiles.push(new Projectile(this))
+                    this.game.elements.projectiles.push(this.newProj());
                     this.ready = false;
                     break;
                 }
         }
         }
+    }
+    upgrade = () => {
+        this.game.ui.delete("upgrade");
+        console.log("happening")
+        let upgradeUI = new UpgradeUi(this);
+        this.game.ui.set("upgrade", upgradeUI);
+    }
+}
+
+class Normal extends Tower{
+    constructor(parent){
+        super(parent);
+        this.color = "green";
+        this.range = 200;
+        this.power = 50;
+        this.proj = {
+            size: 10,
+            color: "yellow",
+            speed: 0.1,
+        }
         
-        
+    }
+    newProj = () => {
+        return (new NormalProj(this));
     }
 }
 
@@ -299,18 +372,18 @@ class Grid {
         this.ctx.font = "20px Arial";
         this.ctx.fillText(this.pathHeight, this.position.x * 100 +10,  this.position.y * 100  +50)
     }
-    placeTower = () => {
+    place = () => {
         if (this.type === "empty"){
             this.type = "tower";
             this.walk = false;
-            this.contains = new Tower(this);
+            this.contains = new Normal(this);
             this.pathHeight = -Infinity;
             this.game.elements.towers.push(this.contains);
         this.game.pathFinding();
         }
         
     }
-    sellTower(){
+    sell(){
         if (this.type === "tower"){
             let index = this.game.elements.towers.indexOf(this.contains)
             this.game.elements.towers.splice(index,1);
@@ -326,7 +399,7 @@ class Grid {
 class Game {
     constructor(name){
         this.name = name;
-        this.screenSize = {x: 800, y: 900};
+        this.screenSize = {x: 800, y: 1000};
         this.screen = new Canvas("canvas1", this.screenSize);
         this.mouse = new Mouse(this);
         this.path = [];
@@ -344,8 +417,8 @@ class Game {
             money: 1000,
             lives: 10,
             start: {x: 0, y: 5},
-            end: {x: 5, y: 6},
-            states: {0: "wave", 1: "placeTower", 2: "sellTower", 3: "Upgrade"},
+            end: {x: 5, y: 5},
+            states: {0: "wave", 1: "place", 2: "sell", 3: "upgrade"},
         };
 
         this.frame = 0;
@@ -448,14 +521,14 @@ class Game {
             case "wave":
 
                 break;
-            case "placeTower":
-                this.gameGrid.get(mousePos).placeTower();
+            case "place":
+                this.gameGrid.get(mousePos).place();
                 break;
-            case "sellTower":
-                this.gameGrid.get(mousePos).sellTower();
+            case "sell":
+                this.gameGrid.get(mousePos).sell();
                 break;
-            case "Upgrade":
-
+            case "upgrade":
+                this.gameGrid.get(mousePos).contains.upgrade();
                 break;
         
             default:
@@ -476,8 +549,9 @@ class Game {
         // set Ui element at the bottom
         this.ui.set("x0y8", new Ui(this, "UiClose"));
         this.ui.set("x1y8", new Ui(this, "UiMenu"));
-        this.ui.set("x2y8", new Ui(this, "placeTower"));
-        this.ui.set("x3y8", new Ui(this, "sellTower"));
+        this.ui.set("x2y8", new Ui(this, "place"));
+        this.ui.set("x3y8", new Ui(this, "sell"));
+        this.ui.set("x4y8", new Ui(this, "upgrade"));
     }
     start(){
         this.makeGrid();
@@ -521,9 +595,9 @@ class Game {
         this.elements.projectiles.forEach(element => {
             element.draw();
         });
-        for(let x of this.gameGrid.values()){
-            x.drawHeigth()
-        }
+        // for(let x of this.gameGrid.values()){
+        //     x.drawHeigth()
+        // }
         for(let x of this.ui.values()){
             x.draw()
         }
