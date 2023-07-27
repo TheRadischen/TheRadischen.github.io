@@ -1,647 +1,139 @@
+const canvas = document.getElementById("color")
+const ctx = canvas.getContext("2d");
+
+let coolZooms = [84.96137312576997,341.2300879109429,255.68992959747393]
+
+let offset = 0;
+let zoom = 257.6000000000003
+canvas.addEventListener("click",()=>{zoom += 0.1;init();console.log(zoom)})
+// canvas.addEventListener("click",()=>{stopAnimation = !stopAnimation})
+let stopAnimation = false
+let width = 1920;
+let height = 1080;
+
+let data;
+let imageData
+resizeCanvas();
+
+// Attach an event listener to window resize event
+window.addEventListener('resize', resizeCanvas);
+
+// Function to resize the canvas
+function resizeCanvas() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+
+    canvas.width = width;
+    canvas.height = height;
+
+    imageData = ctx.getImageData(0,0,width,height)
+    data = imageData.data
+    init();
+}
+
+function clear(){
+    ctx.clearRect(0, 0, width, height);
+}
+
+// ctx.imageSmoothingEnabled = false
+
+// ctx.fillStyle = "#aabbcc";
+// ctx.fillRect(0,0,5,5);
+
+// let data = new Uint8ClampedArray(width * height * 4)
+for(let i = 0; i < data.byteLength; i++){
+    data[i] = 256
+}
+// imageData.data = data
+let len = data.byteLength
+
+ctx.putImageData(imageData,0,0)
 
 
+// ctx.putImageData(imageData,0,0)
 
-class Mouse {
-    constructor(game){
-        this.game = game;
-        this.x = undefined;
-        this.y = undefined;
-        this.canvas = game.screen.canvas;
-        this.gridPosition = undefined
-        this.canvas.addEventListener("mousemove", (e) => {
-            let canvasPosition = this.canvas.getBoundingClientRect();
-            this.x = e.x - canvasPosition.left;
-            this.y = e.y - canvasPosition.top;
-            this.gridPosition = `x${Math.floor(this.x / 100)}y${Math.floor(this.y / 100)}`
-        });
-        this.canvas.addEventListener("mouseout", () => {
-            this.x = undefined;
-            this.y = undefined;
-            this.gridPosition = undefined
-        });
-        this.canvas.addEventListener("mousedown", () => {
-            this.game.handleClick();
+console.log(data)
+console.log(ctx)
+function init(){
+    for(let row = 0; row < height; row++){
+        for(let col = 0; col < width; col++){
+            let field = (row * width + col) * 4
+            // let color = ((row*zoom + offset) * (col*zoom+offset)) % 256
+            let color = ((row*zoom + offset) ^ (col*zoom+offset)) % 256
+            data[field] = (color + row ^ col / 6) % 256;
+            field++;
+            data[field] = (color + 85 + row ^ col + col / 5 + row / 4) % 256;
+            field++;
+            data[field] = (color + 170 + col ^ row / 7) % 256;
+            field++;
+            data[field] = 256;
+        }
+    }
+}
+init()
+function updateCanvas(){
+    // for (let i = 0; i < len; i++){
+    //     data[i] = (data[i] + i) % 256;
+    // }
+    // console.log(data)
 
-        });
-        this.canvas.addEventListener("mouseup", () => {
-            return
-        });
+    // for(let row = 0; row < height; row++){
+    //     for(let col = 0; col < width; col++){
+    //         let field = (row * width + col) * 4
+    //         data[field] = (data[field] += 133) % 256;
+    //         field++;
+    //         data[field] = (data[field] += 123) % 256;
+    //         field++;
+    //         data[field] = (data[field] += 127) % 256;
+    //         field++;
+    //         data[field] = 256;
+    //     }
+    // }
+    for(let row = 0; row < height; row++){
+        for(let col = 0; col < width; col++){
+            let field = (row * width + col) * 4
+            data[field] = (data[field] += 254 ) % 256;
+            field++;
+            data[field] = (data[field] += 1 ) % 256;
+            field++;
+            data[field] = (data[field] += 3) % 256;
+            field++;
+            data[field] = 256;
+        }
     }
     
     
-}
-
-class UpgradeUi{
-    constructor(parent){
-        this.game = parent.game;
-        this.parent = parent;
-        this.position = parent.centre();
-        this.ctx = this.game.screen.ctx;
-        this.game.state = "upgrade";
-        this.width = 200;
-        this.height = 400;
-
-    }
-    draw = () => {
-        // console.log("draw", this.position)
-        let offset;
-        if (this.position.x * 100 > this.game.gameSize.x / 2){
-            if (this.position.y * 100 > this.game.gameSize.y / 2){
-                offset = {x: - this.width, y: - this.height}
-            } else {
-                offset = {x: - this.width, y: 0}
-            }
-        } else {
-            if (this.position.y * 100 > this.game.gameSize.y / 2){
-                offset = {x: 0, y: - this.height}
-            } else {
-                offset = {x: 0, y: 0}
-            }
-        }
-        console.log(this.game.gameSize.x)
-        this.ctx.fillStyle = "black";
-        this.ctx.fillRect(this.position.x * 100 + offset.x, this.position.y * 100 + offset.y, this.width, this.height);
-        this.ctx.fillStyle = "white";
-        this.ctx.fillRect(this.position.x * 100 + offset.x + 10, this.position.y * 100 + offset.y + 10, this.width - 20, this.height - 20);
-    }
 
 }
 
-const uiConf = {
-    "UiClose": {
-        position: {x: 0, y: 8},
-        color: "white",
-    },
-    "UiMenu": {
-        position: {x: 1, y: 8},
-        color: "white",
-    },
-    "place": {
-        position: {x: 2, y: 8},
-        color: "white",
-    },
-    "sell": {
-        position: {x: 3, y: 8},
-        color: "white",
-    },
-    "upgrade": {
-        position: {x: 4, y: 8},
-        color: "white",
-    },
+let frame = 0;
+function animate(){
+    if(!stopAnimation){
+        frame++;
+        updateCanvas();
+        ctx.putImageData(imageData,0,0)
+    }
+    requestAnimationFrame(animate);
 }
 
-class Ui {
-    constructor(game, type){
-        this.game = game;
-        this.ctx = game.screen.ctx;
-        this.type = type;
-        this.position = uiConf[type].position;
-        this.gridPosition = xystring(this.position);
-        this.color = uiConf[type].color;
-    }
-    draw = () => {
-        this.ctx.fillStyle = this.color;
-        this.ctx.font = "20px Arial";
-        this.ctx.fillText(this.type, this.position.x * 100 + 10, this.position.y * 100 + 60);
-    }
-    action = () => {
-        
-        this.game.ui.delete("upgrade");
-        switch (this.type) {
-            case "UiMenu":
-                console.log("action")
-                break;
-            case "UiClose":
-                console.log("close")
-                this.game.state = "wave";
-                break;
-            case "place":
-                console.log("place now");
-                this.game.state = "place";
-                break;
-            case "sell":
-                console.log("sell now");
-                this.game.state = "sell";
-                break;
-            case "upgrade":
-                console.log("upgrade now");
-                this.game.state = "upgrade";
-                break;
-                    
-            default:
-                break;
-        }
-        
-    }
-}
-
-class Canvas{
-    constructor(canvas1, screenSize){
-        this.width = screenSize.x;
-        this.height = screenSize.y;
-        this.canvas = document.getElementById(canvas1);
-        this.ctx = this.canvas.getContext("2d");
-        this.canvas.width = this.width;
-        this.canvas.height = this.height;
-        this.canvas.style.width = `${this.width}px`
-        this.canvas.style.height = `${this.height}px`
-    }
-    clear(){
-        this.ctx.clearRect(0, 0, this.width, this.height);
-    }
-    drawCircle(x,y,r,color){
-        this.ctx.fillStyle = color;
-        this.ctx.beginPath();
-        this.ctx.arc(x, y, r, 0, 2* Math.PI);
-        this.ctx.fill();
-    }
-    drawRect = (position,dimention,color) => {
-        this.ctx.fillStyle = color;
-        this.ctx.fillRect(position.x, position.y, dimention.w, dimention.h);
-    }
-    strokeRect(position,dimention,color){
-        this.ctx.strokeStyle = color;
-        this.ctx.strokeRect(position.x, position.y, dimention.w, dimention.h);
-    }
-    drawUiCell(cellx, celly, row, text){
-        this.ctx.fillStyle = conf.uiColor;
-        this.ctx.font = conf.uiFont;
-        this.ctx.fillText(text, cellx * conf.scale + 10, celly * conf.scale + 30 * (row + 1));
-    }
-    drawUi = (x, y, text, color) => {
-        // console.log(this)
-        this.ctx.fillStyle = color;
-        this.ctx.font = "20px Arial";
-        this.ctx.fillText(text, x + 10, y + 30);
-    }
-    drawMainMenu = (name) => {
-        this.drawRect({x: this.width / 2 - 100
-            , y: this.height / 2 - 100
-            },{w: 200
-            , h: 200
-            }, "Black"
-        )
-        this.drawUi(
-            this.width / 2 - 80,
-            this.height / 2 - 100,
-            name,
-            "red"
-        )
-        this.drawRect({x: this.width / 2 - 80
-            , y: this.height / 2 - 50
-            },{w: 160
-            , h: 130
-            }, "green"
-        )
-        this.drawUi(
-            this.width / 2 - 60,
-            this.height / 2 - 10,
-            "New Game",
-            "black"
-        )
-        
-    }
-    drawElements(){ // loop over eyerython and draw shit( maybe accept them ass atrribuites?)
-        this.clear()
-        
-        // game.cells
-        // game.towers
-        // game.enemies
-        // game.projectiles
-        for (let element of toDraw){
-            element.shape
-            // elemnts have shape, size, color, position
-        }
-    }
-
-}
-
-class Enemy{
-    constructor(game){
-        this.game = game;
-        this.position = {
-            x: this.game.conf.start.x + 0.5,
-            y: this.game.conf.start.y + 0.5
-        }
-        this.goal = this.game.conf.end;
-        this.dist = 100;
-        this.ctx = this.game.screen.ctx;
-        this.color = "red";
-        this.size = 10;
-        this.speed = 0.05;
-        this.health = 100;
-        }
-        gridPosition = () => {
-            return {
-                x: Math.floor(this.position.x),
-                y: Math.floor(this.position.y)
-            }
-        }
-        update = () => {
-            this.goal = this.game.gameGrid.get(xystring(this.gridPosition())).nextStep;
-            let direction = calcDirection(this.position, this.goal);
-            this.dist = calcDist(this.position, this.goal);
-            this.position.x += Math.cos(direction) * this.speed;
-            this.position.y += Math.sin(direction) * this.speed;
-        }
-        draw = () => {
-            this.ctx.fillStyle = this.color;
-            this.ctx.fillRect(this.position.x * 100, this.position.y * 100, this.size, this.size);
-        }
-
-}
-class Projectile{
-    constructor(parent){
-        this.game = parent.game;
-        this.ctx = this.game.screen.ctx;
-        this.position = {
-            x: parent.position.x + 0.5,
-            y: parent.position.y + 0.5
-        };
-        this.goal = parent.aim;
-        this.dist = Infinity;
-    }
-    update = () => {
-        this.dist = calcDist(this.position, this.goal.position);
-        let direction = calcDirection(this.position, this.goal.position);
-        this.position.x += Math.cos(direction) * this.speed;
-        this.position.y += Math.sin(direction) * this.speed;
-    }
-    draw = () => {
-        this.ctx.fillStyle = this.color;
-        this.ctx.fillRect(this.position.x * 100, this.position.y * 100, this.size, this.size);
-    }
-
-}
-
-class NormalProj extends Projectile{
-    constructor(parent){
-        super(parent);
-        this.size = parent.proj.size;
-        this.color = parent.proj.color;
-        this.speed = parent.proj.speed;
-        this.power = parent.power;
-
-    }
-}
-
-class Tower{
-    constructor(parent){
-        this.game = parent.game;
-        this.name = "tower";
-        this.position = parent.position;
-        this.size = this.game.gameSize.scale;
-        this.ctx = this.game.screen.ctx;
-        this.aim = this.game.conf.end;
-        this.counter = 1;
-        this.ready = false;
-    }
-    centre = () => {
-        return {
-            x: this.position.x + 0.5,
-            y: this.position.y + 0.5
-        }
-    }
-    draw = () => {
-        this.ctx.fillStyle = this.color;
-        this.ctx.fillRect(this.position.x * 100, this.position.y * 100, this.size, this.size);
-    }
-    update = () => {
-        this.counter++;
-        if (this.counter % 10 === 0){
-            this.ready = true;
-        }
-        if(this.ready && this.game.elements.enemies.length > 0){
-            for (let x of this.game.elements.enemies){
-            // console.log((calcDist(this.centre(), x.position)))
-                if (calcDist(this.centre(), x.position) <= this.range / 100){                            
-                    this.aim = x;
-                    this.game.elements.projectiles.push(this.newProj());
-                    this.ready = false;
-                    break;
-                }
-        }
-        }
-    }
-    upgrade = () => {
-        this.game.ui.delete("upgrade");
-        console.log("happening")
-        let upgradeUI = new UpgradeUi(this);
-        this.game.ui.set("upgrade", upgradeUI);
-    }
-}
-
-class Normal extends Tower{
-    constructor(parent){
-        super(parent);
-        this.color = "green";
-        this.range = 200;
-        this.power = 50;
-        this.proj = {
-            size: 10,
-            color: "yellow",
-            speed: 0.1,
-        }
-        
-    }
-    newProj = () => {
-        return (new NormalProj(this));
-    }
-}
+animate();
 
 
-class Grid {
-    constructor(position, game){
-        this.game = game;
-        this.ctx = this.game.screen.ctx;
-        this.position = position;
-        this.walk = true;
-        this.type = "empty"; //empts, start, end, tower
-        this.contains = null;
-        this.pathHeight = 0;
-        this.nextStep = this.game.conf.end;
-        // a neihbour map for path finding would be nice
-    }
-    drawUmrand(){
-        this.ctx.strokeStyle = "Black";
-        this.ctx.strokeRect(this.position.x * this.game.gameSize.scale, 
-        this.position.y * this.game.gameSize.scale, this.game.gameSize.scale, this.game.gameSize.scale)
-    }
-    drawHeigth = () => {
-        this.ctx.fillStyle = "White";
-        this.ctx.font = "20px Arial";
-        this.ctx.fillText(this.pathHeight, this.position.x * 100 +10,  this.position.y * 100  +50)
-    }
-    place = () => {
-        if (this.type === "empty"){
-            this.type = "tower";
-            this.walk = false;
-            this.contains = new Normal(this);
-            this.pathHeight = -Infinity;
-            this.game.elements.towers.push(this.contains);
-        this.game.pathFinding();
-        }
-        
-    }
-    sell(){
-        if (this.type === "tower"){
-            let index = this.game.elements.towers.indexOf(this.contains)
-            this.game.elements.towers.splice(index,1);
-            this.walk = true
-            this.contains = null;
-            this.type = "empty";
-            this.game.pathFinding();
-        } 
-
-    }
-}
-
-class Game {
-    constructor(name){
-        this.name = name;
-        this.screenSize = {x: 800, y: 1000};
-        this.screen = new Canvas("canvas1", this.screenSize);
-        this.mouse = new Mouse(this);
-        this.path = [];
-        this.gameSize = {
-            x: 800, 
-            y: 800,
-            scale: 100,
-            columns: 8,
-            rows: 8,
-        };
-        this.gameGrid = new Map();
-        this.ui = new Map();
-
-        this.conf = {                
-            money: 1000,
-            lives: 10,
-            start: {x: 0, y: 5},
-            end: {x: 5, y: 5},
-            states: {0: "wave", 1: "place", 2: "sell", 3: "upgrade"},
-        };
-
-        this.frame = 0;
-        this.elements = {
-            towers: [],
-            projectiles: [],
-            enemies: [],
-        };
-
-        this.state = this.conf.states[0];
-        
-    }
-    pathFinding = () => {
-        for(let x of this.gameGrid.values()){
-            switch (x.type) {
-                case "tower":
-                    x.pathHeight = -100;
-                    break;
-                case "end":
-                    x.pathHeight = 1;
-                    break;                
-            
-                default:
-                    x.pathHeight = 0;
-                    break;
-            }
-            x.tempHeigth = x.pathHeight;
-        }
-        let change = 1;
-        while (change){
-            change = 0;
-            for(let x of this.gameGrid.values()){
-                if(x.pathHeight === 1){
-                    change = 1;
-                }
-                if (
-                    x.walk && (
-                        x.pathHeight > 0 ||
-                        this.gameGrid.get(xystring(x.position,1,0))?.pathHeight > 0 ||
-                        this.gameGrid.get(xystring(x.position,-1,0))?.pathHeight > 0 ||
-                        this.gameGrid.get(xystring(x.position,0,1))?.pathHeight > 0 ||
-                        this.gameGrid.get(xystring(x.position,0,-1))?.pathHeight > 0
-                )){
-                    x.tempHeigth += 1;
-                } 
-                // x.pathHeight++
-            }
-            for(let x of this.gameGrid.values()){
-                x.pathHeight = x.tempHeigth
-            }
-            // if(this.gameGrid.get(xystring(this.conf.start)).pathHeight > 0){
-            //     break;
-            // }
-        }
-        for(let x of this.gameGrid.values()){
-            let next;
-            // console.log(x.pathHeight, this.gameGrid.get(xystring(x.position,1,0))?.pathHeight)
-            
-            switch (x.pathHeight) {
-                case -Infinity:
-                    next = this.conf.end;
-                    x.nextStep = {x: next.x + 0.5, y: next.y + 0.5}
-                    break;
-                case 0:
-                    next = this.conf.end;
-                    x.nextStep = {x: next.x + 0.5, y: next.y + 0.5}
-                    break;
-                case this.gameGrid.get(xystring(x.position,1,0))?.pathHeight - 1:
-                    next = this.gameGrid.get(xystring(x.position,1,0))?.position;
-                    x.nextStep = {x: next.x + 0.5, y: next.y + 0.5}
-                    break;
-                case this.gameGrid.get(xystring(x.position,-1,0))?.pathHeight - 1:
-                    next = this.gameGrid.get(xystring(x.position,-1,0))?.position;
-                    x.nextStep = {x: next.x + 0.5, y: next.y + 0.5}
-                    break;
-                case this.gameGrid.get(xystring(x.position,0,-1))?.pathHeight - 1:
-                    next = this.gameGrid.get(xystring(x.position,0,-1))?.position;
-                    x.nextStep = {x: next.x + 0.5, y: next.y + 0.5}
-                    break;
-                case this.gameGrid.get(xystring(x.position,0,1))?.pathHeight - 1:
-                    next = this.gameGrid.get(xystring(x.position,0,1))?.position;
-                    x.nextStep = {x: next.x + 0.5, y: next.y + 0.5}
-                    break;
-            
-                default:
-                    next = this.conf.end;
-                    x.nextStep = {x: next.x + 0.5, y: next.y + 0.5}
-                    break;
-            }
-        }
-    }
-    handleClick = () => {
-        let mousePos = this.mouse.gridPosition;
-        // this.screen.clear()
-        //calc the path arr
-        this.ui.get(mousePos)?.action();
-        console.log(mousePos)
-        
-        switch (this.state) {
-            case "wave":
-
-                break;
-            case "place":
-                this.gameGrid.get(mousePos).place();
-                break;
-            case "sell":
-                this.gameGrid.get(mousePos).sell();
-                break;
-            case "upgrade":
-                this.gameGrid.get(mousePos).contains.upgrade();
-                break;
-        
-            default:
-                break;
-        }
-        
-    }
-    makeGrid = () => {
-        for (let i = 0; i < this.gameSize.rows; i++){
-            for (let j = 0; j < this.gameSize.columns; j++){
-                let position = {x: j, y: i};
-                this.gameGrid.set(xystring(position), new Grid(position, this));
-            }
-        }
-        this.gameGrid.get(xystring(this.conf.start)).type = "start";
-        this.gameGrid.get(xystring(this.conf.end)).pathHeight = 1;
-        this.gameGrid.get(xystring(this.conf.end)).type = "end";
-        // set Ui element at the bottom
-        this.ui.set("x0y8", new Ui(this, "UiClose"));
-        this.ui.set("x1y8", new Ui(this, "UiMenu"));
-        this.ui.set("x2y8", new Ui(this, "place"));
-        this.ui.set("x3y8", new Ui(this, "sell"));
-        this.ui.set("x4y8", new Ui(this, "upgrade"));
-    }
-    start(){
-        this.makeGrid();
-        this.mainAnimate();
-    }
-    updateElements = () => {
-        if (this.frame % 2 === 0){
-            this.elements.enemies.push(new Enemy(this));
-        }
-        this.elements.towers.forEach(element => {
-            element.update();
-        });
-        this.elements.enemies.forEach(element => {
-            element.update();
-            if(element.dist < 0.05 || element.health <= 0){
-                let index = this.elements.enemies.indexOf(element)
-                this.elements.enemies.splice(index,1);
-            }
-        });
-        this.elements.projectiles.forEach(element => {
-            element.update();
-            if(element.dist < 0.05){
-                let index = this.elements.projectiles.indexOf(element)
-                element.goal.health -= element.power;
-                this.elements.projectiles.splice(index,1);
-            }
-        });
-
-    }
-    drawElements = () => {
-
-        if (this.mouse.gridPosition){
-            this.gameGrid.get(this.mouse.gridPosition)?.drawUmrand()
-        }
-        this.elements.towers.forEach(element => {
-            element.draw();
-        });
-        this.elements.enemies.forEach(element => {
-            element.draw();
-        });
-        this.elements.projectiles.forEach(element => {
-            element.draw();
-        });
-        // for(let x of this.gameGrid.values()){
-        //     x.drawHeigth()
-        // }
-        for(let x of this.ui.values()){
-            x.draw()
-        }
-
-    }
-    mainLoop = () => {
-        this.frame++;
-        
-        this.updateElements();
-        this.drawElements();
-    }
-    mainAnimate = () => {
-        this.screen.clear()
-        this.mainLoop()
-
-        
-    
-        
-        requestAnimationFrame(this.mainAnimate)
-    }
-}
-
-let tdGame = new Game("Tower Defense");
-tdGame.start();
+// for(let row = 0; row < width; row++){
+//     for(let col = 0; col < height; col++){
+//         let field = (row * height + col) * 4
+//         let color = (row * col) % 256
+//         data[field] = color;
+//         field++;
+//         data[field] = color;
+//         field++;
+//         data[field] = color;
+//         field++;
+//         data[field] = 256;
+//     }
+// }
 
 
-// functions
 
-//take two objekts with x and y coord and return distance
-function calcDist(first, second){
-    return Math.sqrt((first.x - second.x) ** 2 + (first.y - second.y) ** 2)
-}
 
-//between 0 and 2 * PI, convert with sin to y, cos to x
-
-function calcDirection(self, target){
-    let dist = calcDist(self, target);
-    if (Math.sign(target.y - self.y) === -1){
-        return Math.PI * 2 - Math.acos((target.x - self.x) / dist);
-    } else {
-        return Math.acos((target.x - self.x) / dist);
-    }
-}
-
-function xystring(obj, x = 0, y = 0){
-    return `x${obj.x + x}y${obj.y + y}`
-}
+// ctx.putImageData(imageData,0,0)
